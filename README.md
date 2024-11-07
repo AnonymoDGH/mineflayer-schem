@@ -1,100 +1,90 @@
-# mineflayer-builder
+# Mineflayer Builder Plugin
 
-A simple builder plugin for Mineflayer that allows bots to build structures using schematics.
+A plugin for Mineflayer that allows bots to build structures from schematic files.
 
 ## Installation
-
-```bash
+```
 npm install mineflayer-builder
 ```
-
 ## Usage
-
 ```js
 const mineflayer = require('mineflayer')
 const builderPlugin = require('mineflayer-builder')
-const { Schematic } = require('prismarine-schematic')
-const fs = require('fs')
 
-const bot = mineflayer.createBot({
-  host: 'localhost',
-  port: 25565,
-  username: 'Builder'
-})
-
+const bot = mineflayer.createBot({...})
 bot.loadPlugin(builderPlugin)
-
-// Load schematic
-let schematic
-async function loadSchematic() {
-  const schematicData = fs.readFileSync('path/to/your/schematic.schem')
-  schematic = await Schematic.read(schematicData)
-}
-
-// Listen to chat commands
-bot.on('chat', async (username, message) => {
-  if (username === bot.username) return
-  
-  if (message === 'build') {
-    if (!schematic) await loadSchematic()
-    bot.builder.build(schematic)
-  }
-})
-
-// Load schematic when bot spawns
-bot.once('spawn', () => {
-  loadSchematic()
-})
 ```
-
-## Features
-
-- Build structures from schematic files (.schem format)
-- Automatic block placement following schematic pattern
-- Path finding to reach building locations
-- Chat command control
-
-## Chat Commands
-
-In Minecraft chat:
-- `build` - Starts building the loaded schematic
-- `cancel` - Cancels current building task (WIP)
-
 ## API
 
-### bot.builder.build(schematic)
+### Builder Methods
 
-Starts the building process using the provided schematic.
-- `schematic`: A prismarine-schematic object containing the structure to build
+#### bot.builder.build(build)
+Starts building the specified structure
+- build: Build object created from a schematic
 
-### bot.builder.getBlockPlace()
+#### bot.builder.pause()
+Pauses the current building process
 
-Internal function that handles block placement logic according to the schematic.
+#### bot.builder.resume()
+Resumes a paused building process
 
-### bot.builder.findPath()
+#### bot.builder.cancel()
+Cancels the current building process
 
-Internal function for pathfinding to build locations.
+#### bot.builder.getProgress()
+Returns the current building progress
+- Returns: { completed: number, total: number }
 
-## Dependencies
+#### bot.builder.equipItem(id)
+Equips the specified item
+- id: Item ID to equip
 
-- mineflayer
-- mineflayer-pathfinder
-- prismarine-block
-- prismarine-schematic
-- vec3
+### Events
 
-## Notes
+#### builder_progress
+Emitted when building progress updates
+```js
+bot.on('builder_progress', (progress) => {
+  // progress = { completed: number, total: number }
+})
+```
+#### builder_finished
+Emitted when building completes successfully
 
-This plugin is currently in development. Some features like material collection and build cancellation are work in progress.
+#### builder_cancelled
+Emitted when building is cancelled
 
-## Required Files
+#### builder_error
+Emitted when an error occurs during building
+```js
+bot.on('builder_error', (error) => {
+  console.log('Building error:', error)
+})
+```
+#### builder_paused
+Emitted when building is paused
 
-You need a .schem file (Schematic) of the structure you want to build. These can be created using tools like WorldEdit.
+#### builder_resumed
+Emitted when building is resumed
 
-## Contributing
+### Build Class
 
-Feel free to open issues and pull requests!
+#### new Build(schematic, world, position)
+Creates a new Build instance
+- schematic: Schematic object
+- world: Bot's world
+- position: Vec3 position where to build
 
-## License
+#### Properties
+- actions: Array of pending building actions
+- properties: Block state properties
+- isPaused: Boolean indicating if build is paused
+- isCancelled: Boolean indicating if build is cancelled
 
-MIT
+#### Methods
+- getAvailableActions(): Returns array of available actions
+- removeAction(action): Removes completed action
+- pause(): Pauses the build
+- resume(): Resumes the build
+- cancel(): Cancels the build
+- getavailableActions(): Returns array of available actions
