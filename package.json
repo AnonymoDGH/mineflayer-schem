@@ -1,31 +1,33 @@
 {
-  "name": "prismarine-template",
+  "name": "mineflayer-builder",
   "version": "1.0.0",
-  "description": "A template repository to make it easy to create new prismarine repo",
+  "description": "A simple builder plugin for Mineflayer that allows bots to build structures using schematics.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --reporter spec --exit",
-    "pretest": "npm run lint",
-    "lint": "standard",
-    "fix": "standard --fix"
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mineflayer",
+    "minecraft",
+    "bot",
+    "builder",
+    "schematic"
+  ],
+  "author": "AnonymoDGH",
+  "license": "MIT",
+  "dependencies": {
+    "mineflayer": "^4.8.1",
+    "mineflayer-pathfinder": "^2.4.2",
+    "prismarine-block": "^1.16.3",
+    "prismarine-schematic": "^1.2.2",
+    "vec3": "^0.1.8"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PrismarineJS/prismarine-template.git"
+    "url": "https://github.com/AnonymoDGH/mineflayer-builder.git"
   },
-  "keywords": [
-    "prismarine",
-    "template"
-  ],
-  "author": "Romain Beaumont",
-  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/PrismarineJS/prismarine-template/issues"
+    "url": "https://github.com/AnonymoDGH/mineflayer-builder/issues"
   },
-  "homepage": "https://github.com/PrismarineJS/prismarine-template#readme",
-  "devDependencies": {
-    "prismarine-template": "file:.",
-    "standard": "^17.0.0",
-    "mocha": "^10.0.0"
-  }
+  "homepage": "https://github.com/AnonymoDGH/mineflayer-builder#readme"
 }
