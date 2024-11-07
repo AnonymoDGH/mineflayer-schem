@@ -1,24 +1,100 @@
-# prismarine-template
-[![NPM version](https://img.shields.io/npm/v/prismarine-template.svg?logo=npm)](http://npmjs.com/package/prismarine-template)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/PrismarineJS/prismarine-template/ci.yml.svg?label=CI&logo=github)](https://github.com/PrismarineJS/prismarine-template/actions?query=workflow%3A%22CI%22)
-[![Try it on gitpod](https://img.shields.io/static/v1.svg?label=try&message=on%20gitpod&color=brightgreen&logo=gitpod)](https://gitpod.io/#https://github.com/PrismarineJS/prismarine-template)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/PrismarineJS)](https://github.com/sponsors/PrismarineJS)
+# mineflayer-builder
 
-[![Official Discord](https://img.shields.io/static/v1.svg?label=OFFICIAL&message=DISCORD&color=blue&logo=discord&style=for-the-badge)](https://discord.gg/GsEFRM8)
+A simple builder plugin for Mineflayer that allows bots to build structures using schematics.
 
+## Installation
 
-A template repository to make it easy to create new prismarine repo
+```bash
+npm install mineflayer-builder
+```
 
 ## Usage
 
 ```js
-const template = require('prismarine-template')
+const mineflayer = require('mineflayer')
+const builderPlugin = require('mineflayer-builder')
+const { Schematic } = require('prismarine-schematic')
+const fs = require('fs')
 
-template.helloWorld()
+const bot = mineflayer.createBot({
+  host: 'localhost',
+  port: 25565,
+  username: 'Builder'
+})
+
+bot.loadPlugin(builderPlugin)
+
+// Load schematic
+let schematic
+async function loadSchematic() {
+  const schematicData = fs.readFileSync('path/to/your/schematic.schem')
+  schematic = await Schematic.read(schematicData)
+}
+
+// Listen to chat commands
+bot.on('chat', async (username, message) => {
+  if (username === bot.username) return
+  
+  if (message === 'build') {
+    if (!schematic) await loadSchematic()
+    bot.builder.build(schematic)
+  }
+})
+
+// Load schematic when bot spawns
+bot.once('spawn', () => {
+  loadSchematic()
+})
 ```
+
+## Features
+
+- Build structures from schematic files (.schem format)
+- Automatic block placement following schematic pattern
+- Path finding to reach building locations
+- Chat command control
+
+## Chat Commands
+
+In Minecraft chat:
+- `build` - Starts building the loaded schematic
+- `cancel` - Cancels current building task (WIP)
 
 ## API
 
-### helloWorld()
+### bot.builder.build(schematic)
 
-Prints hello world
+Starts the building process using the provided schematic.
+- `schematic`: A prismarine-schematic object containing the structure to build
+
+### bot.builder.getBlockPlace()
+
+Internal function that handles block placement logic according to the schematic.
+
+### bot.builder.findPath()
+
+Internal function for pathfinding to build locations.
+
+## Dependencies
+
+- mineflayer
+- mineflayer-pathfinder
+- prismarine-block
+- prismarine-schematic
+- vec3
+
+## Notes
+
+This plugin is currently in development. Some features like material collection and build cancellation are work in progress.
+
+## Required Files
+
+You need a .schem file (Schematic) of the structure you want to build. These can be created using tools like WorldEdit.
+
+## Contributing
+
+Feel free to open issues and pull requests!
+
+## License
+
+MIT
