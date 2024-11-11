@@ -4,13 +4,13 @@ A plugin for Mineflayer that allows bots to build structures from schematic file
 
 ## Installation
 ```
-npm install mineflayer-builder
+npm install mineflayer-schem
 ```
 ## Usage
 ```js
 const mineflayer = require('mineflayer')
-const { builder, Build } = require('mineflayer-builder')
-const builderPlugin = require('mineflayer-builder').builder
+const { builder, Build } = require('mineflayer-schem')
+const builderPlugin = require('mineflayer-schem').builder
 
 const bot = mineflayer.createBot({...})
 bot.loadPlugin(builderPlugin)
