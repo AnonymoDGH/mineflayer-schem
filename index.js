@@ -158,6 +158,6 @@ function inject(bot) {
 }
 
 module.exports = {
-  Build: require('./lib/Build'),
+  Build: require('./lib/build.js'),
   builder: inject
 }
