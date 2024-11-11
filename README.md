@@ -9,7 +9,8 @@ npm install mineflayer-builder
 ## Usage
 ```js
 const mineflayer = require('mineflayer')
-const builderPlugin = require('mineflayer-builder')
+const { builder, Build } = require('mineflayer-builder')
+const builderPlugin = require('mineflayer-builder').builder
 
 const bot = mineflayer.createBot({...})
 bot.loadPlugin(builderPlugin)
