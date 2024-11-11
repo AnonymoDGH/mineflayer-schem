@@ -37,7 +37,7 @@ function inject(bot) {
 
   bot.builder.build = async (build) => {
     currentBuild = build
-    
+
     try {
       while (build.actions.length > 0) {
         if (build.isCancelled) {
@@ -51,7 +51,6 @@ function inject(bot) {
         }
 
         const actions = build.getAvailableActions()
-        console.log(`${actions.length} available actions`)
         if (actions.length === 0) {
           console.log('No actions to perform')
           break
@@ -64,12 +63,10 @@ function inject(bot) {
         })
 
         const action = actions[0]
-        console.log('action', action)
 
         try {
           if (action.type === 'place') {
             const item = build.getItemForState(action.state)
-            console.log('Selecting ' + item.displayName)
 
             const properties = build.properties[action.state]
             const half = properties.half ? properties.half : properties.type
@@ -77,7 +74,6 @@ function inject(bot) {
             const faces = build.getPossibleDirections(action.state, action.pos)
             for (const face of faces) {
               const block = bot.blockAt(action.pos.plus(face))
-              console.log(face, action.pos.plus(face), block.name)
             }
 
             const { facing, is3D } = build.getFacing(action.state, properties.facing)
@@ -89,7 +85,6 @@ function inject(bot) {
             })
 
             if (!goal.isEnd(bot.entity.position.floored())) {
-              console.log('pathfinding')
               bot.pathfinder.setMovements(movements)
               await bot.pathfinder.goto(goal)
             }
@@ -110,8 +105,6 @@ function inject(bot) {
 
             const block = bot.world.getBlock(action.pos)
             if (block.stateId !== action.state) {
-              console.log('expected', properties)
-              console.log('got', block.getProperties())
             }
           }
         } catch (e) {
@@ -121,7 +114,7 @@ function inject(bot) {
 
         build.markActionComplete(action)
         build.removeAction(action)
-        
+
         bot.emit('builder_progress', build.getProgress())
       }
 
