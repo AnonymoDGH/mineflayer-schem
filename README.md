@@ -1,7 +1,7 @@
 # Mineflayer Builder Plugin
 
 A plugin for Mineflayer that allows bots to build structures from schematic files.
-
+https://www.npmjs.com/package/mineflayer-schem
 ## Installation
 ```
 npm install mineflayer-schem
