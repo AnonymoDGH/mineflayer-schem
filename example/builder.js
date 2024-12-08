@@ -38,7 +38,6 @@ bot.once('spawn', async () => {
 
   const build = new Build(schematic, bot.world, at);
 
-  // Configuración de opciones
   const options = {
     buildSpeed: 1.0, // 1.0 is normal speed, 0.5 is half speed, etc.
     useTools: true,
