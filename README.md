@@ -1,6 +1,4 @@
-Claro, aquí tienes el `README.md` mejorado para la versión 1.3.2 del plugin `mineflayer-schem`, incluyendo detalles sobre las nuevas funciones y mejoras:
 
-```markdown
 # Mineflayer Builder Plugin
 
 A plugin for Mineflayer that allows bots to build structures from schematic files.
