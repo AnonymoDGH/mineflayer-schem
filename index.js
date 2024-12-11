@@ -1,5 +1,6 @@
 const { goals, Movements } = require('../mineflayer-pathfinder');
 const interactable = require('./lib/interactable.json');
+const Vec3 = require('vec3');
 
 function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
@@ -12,17 +13,17 @@ function inject(bot, options = {}) {
   const Item = require('prismarine-item')(bot.version);
 
   const defaultOptions = {
-    buildSpeed: 1.0, // 1.0 is normal speed, 0.5 is half speed, etc.
+    buildSpeed: 1.0,
     useTools: true,
-    onError: 'pause', // 'pause', 'cancel', or 'continue'
-    bots: [bot] // Array of bots to collaborate
+    onError: 'pause',
+    bots: [bot],
   };
 
   const settings = { ...defaultOptions, ...options };
 
   const movements = new Movements(bot, {
     maxDropDown: 256,
-    maxClimbUp: 256
+    maxClimbUp: 256,
   });
 
   bot.pathfinder.setMovements(movements);
@@ -66,11 +67,9 @@ function inject(bot, options = {}) {
 
         const availableActions = build.getAvailableActions();
         if (availableActions.length === 0) {
-          console.log('No actions to perform');
           break;
         }
 
-        // Distribute actions among bots
         const bots = settings.bots.filter(b => b.pathfinder && b.pathfinder.movements);
         for (const bot of bots) {
           if (build.actions.length === 0) break;
@@ -80,9 +79,9 @@ function inject(bot, options = {}) {
             if (action.type === 'place') {
               const item = build.getItemForState(action.state);
               const properties = build.properties[action.state];
-              const half = properties.half ? properties.half : properties.type;
-
+              const half = properties.half || properties.type;
               const faces = build.getPossibleDirections(action.state, action.pos);
+
               for (const face of faces) {
                 const block = bot.blockAt(action.pos.plus(face));
               }
@@ -90,9 +89,9 @@ function inject(bot, options = {}) {
               const { facing, is3D } = build.getFacing(action.state, properties.facing);
               const goal = new goals.GoalPlaceBlock(action.pos, bot.world, {
                 faces,
-                facing: facing,
+                facing,
                 facing3D: is3D,
-                half
+                half,
               });
 
               if (!goal.isEnd(bot.entity.position.floored())) {
@@ -115,7 +114,7 @@ function inject(bot, options = {}) {
 
               const block = bot.world.getBlock(action.pos);
               if (block.stateId !== action.state) {
-                console.log('Block placement failed');
+                throw new Error('Block placement failed');
               }
             } else if (action.type === 'dig') {
               const block = bot.blockAt(action.pos);
@@ -127,7 +126,6 @@ function inject(bot, options = {}) {
             bot.emit('builder_progress', build.getProgress());
             await wait(1000 / settings.buildSpeed);
           } catch (e) {
-            console.log(e);
             bot.emit('builder_error', e);
             if (settings.onError === 'pause') {
               build.pause();
@@ -152,7 +150,6 @@ function inject(bot, options = {}) {
     }
   };
 
-  // Control functions
   bot.builder.pause = () => {
     if (currentBuild) {
       currentBuild.pause();
@@ -179,9 +176,36 @@ function inject(bot, options = {}) {
     }
     return null;
   };
+
+  bot.builder.chest = async (coords) => {
+    const [x, y, z] = coords.split(',').map(coord => parseInt(coord.trim()));
+    const chestPos = new Vec3(x, y, z);
+
+    const chest = bot.blockAt(chestPos);
+    if (chest.name !== 'chest') {
+      return;
+    }
+
+    try {
+      await bot.openChest(chest);
+
+      const neededItems = currentBuild.schematic.palette.map(stateId => currentBuild.items[stateId]);
+      for (const item of neededItems) {
+        if (!bot.inventory.items().find(i => i.type === item.id)) {
+          const chestItems = bot.inventory.slots.filter(slot => slot && slot.type === item.id);
+          if (chestItems.length > 0) {
+            await bot.tossStack(chestItems[0]);
+          }
+        }
+      }
+      await bot.closeInventory();
+    } catch (err) {
+      bot.emit('builder_error', err);
+    }
+  };
 }
 
 module.exports = {
   Build: require('./lib/build.js'),
-  builder: inject
+  builder: inject,
 };
