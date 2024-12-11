@@ -3,7 +3,7 @@
 
 A plugin for Mineflayer that allows bots to build structures from schematic files.
 
-[![npm version](https://badge.fury.io/js/mineflayer-schem.svg)](https://www.npmjs.com/package/mineflayer-schem@1.3.6)
+[![npm version](https://badge.fury.io/js/mineflayer-schem.svg)](https://www.npmjs.com/package/mineflayer-schem@1.3.7)
 
 ## Installation
 
