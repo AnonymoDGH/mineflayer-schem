@@ -1,4 +1,4 @@
-const { goals, Movements } = require('../mineflayer-pathfinder');
+const { goals, Movements } = require('mineflayer-pathfinder');
 const interactable = require('./lib/interactable.json');
 const Vec3 = require('vec3');
 const toolPlugin = require('mineflayer-tool').plugin;
