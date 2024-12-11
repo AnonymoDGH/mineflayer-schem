@@ -1,6 +1,7 @@
 const { goals, Movements } = require('../mineflayer-pathfinder');
 const interactable = require('./lib/interactable.json');
 const Vec3 = require('vec3');
+const toolPlugin = require('mineflayer-tool').plugin;
 
 function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
@@ -14,7 +15,6 @@ function inject(bot, options = {}) {
 
   const defaultOptions = {
     buildSpeed: 1.0,
-    useTools: true,
     onError: 'pause',
     bots: [bot],
   };
@@ -29,24 +29,9 @@ function inject(bot, options = {}) {
   bot.pathfinder.setMovements(movements);
   bot.pathfinder.searchRadius = 10;
 
+  bot.loadPlugin(toolPlugin);
+
   bot.builder = {};
-
-  async function equipItem(id) {
-    if (bot.inventory.items().length > 30) {
-      bot.chat('/clear');
-      await wait(1000);
-    }
-    if (!bot.inventory.items().find(x => x.type === id)) {
-      const slot = bot.inventory.items().findIndex(x => x.type === 0);
-      if (slot !== -1) {
-        await bot.creative.setInventorySlot(slot, new Item(id, 1));
-      }
-    }
-    const item = bot.inventory.items().find(x => x.type === id);
-    await bot.equip(item, 'hand');
-  }
-
-  bot.builder.equipItem = equipItem;
 
   let currentBuild = null;
 
@@ -99,7 +84,7 @@ function inject(bot, options = {}) {
                 await bot.pathfinder.goto(goal);
               }
 
-              await equipItem(item.id);
+              await equipToolForAction(action, item);
 
               const faceAndRef = goal.getFaceAndRef(bot.entity.position.floored().offset(0.5, 1.6, 0.5));
               if (!faceAndRef) { throw new Error('no face and ref'); }
@@ -149,6 +134,13 @@ function inject(bot, options = {}) {
       currentBuild = null;
     }
   };
+
+  async function equipToolForAction(action, item) {
+    const block = bot.blockAt(action.pos);
+    if (item && block) {
+      await bot.tool.equipForBlock(block, {});
+    }
+  }
 
   bot.builder.pause = () => {
     if (currentBuild) {
