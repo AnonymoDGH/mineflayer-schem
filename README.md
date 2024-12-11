@@ -3,7 +3,7 @@
 
 A plugin for Mineflayer that allows bots to build structures from schematic files.
 
-[![npm version](https://badge.fury.io/js/mineflayer-schem.svg)](https://www.npmjs.com/package/mineflayer-schem@1.3.4)
+[![npm version](https://badge.fury.io/js/mineflayer-schem.svg)](https://www.npmjs.com/package/mineflayer-schem@1.3.6)
 
 ## Installation
 
@@ -31,10 +31,13 @@ const build = new Build(schematic, bot.world, position);
 
 const options = {
   buildSpeed: 1.0, // 1.0 is normal speed, 0.5 is half speed, etc.
-  useTools: true,
   onError: 'pause', // 'pause', 'cancel', or 'continue'
-  bots: [bot] // Array of_bots_to_collaborate
+  bots: [bot] // Array of bots to collaborate in the build process
 };
+
+// Optional chest option to get items for the build
+// bot.builder.chest([x, y, z]);  // Example: [1204, 149, 1345] (coordinates of the chest)
+bot.builder.chest([1204, 149, 1345]);  // Tells the bot to use items from this chest
 
 bot.builder.build(build, options);
 ```
@@ -47,10 +50,13 @@ bot.builder.build(build, options);
 Starts building the specified structure.
 - `build`: Build object created from a schematic.
 - `options`: Configuration options for the build process.
-  - `buildSpeed`: Speed of_building (1.0 is normal speed, 0.5 is half speed, etc.)
-  - `useTools`: Whether to use tools for building (default: `true`).
+  - `buildSpeed`: Speed of building (1.0 is normal speed, 0.5 is half speed, etc.)
   - `onError`: Action to take on error (`'pause'`, `'cancel'`, or `'continue'`).
   - `bots`: Array of bots to collaborate in the build process (default: `[bot]`).
+
+#### bot.builder.chest(coordinates)
+Specifies the chest from which to take the building materials.
+- `coordinates`: An array of the chest coordinates, e.g. `[x, y, z]`.
 
 #### bot.builder.pause()
 Pauses the current building process.
@@ -128,7 +134,7 @@ Creates a new Build instance.
 - `pause()`: Pauses the build.
 - `resume()`: Resumes the build.
 - `cancel()`: Cancels the build.
-- `getProgress()`: Returns the current build_progress.
+- `getProgress()`: Returns the current build progress.
 - `markActionComplete(action)`: Marks an action as complete.
 - `updateBlock(pos)`: Updates the block at the specified position.
 - `getItemForState(stateId)`: Gets the item for a given state ID.
@@ -180,10 +186,11 @@ bot.once('spawn', async () => {
 
   const options = {
     buildSpeed: 1.0, // 1.0 is normal speed, 0.5 is half speed, etc.
-    useTools: true,
     onError: 'pause', // 'pause', 'cancel', or 'continue'
     bots: [bot] // Array of bots to collaborate
   };
+
+  bot.builder.chest([1204, 149, 1345]);  // Tells the bot to use items from this chest
 
   bot.builder.build(build, options);
 });
@@ -217,10 +224,11 @@ bot.on('builder_action_completed', (action) => {
 });
 ```
 
-### New Features in Version 1.3.3
+### New Features in Version 1.3.6
 
+- **Chest Item Retrieval**: You can now specify a chest using `bot.builder.chest([x, y, z])` to have the bot fetch items from the chest for construction.
 - **Multiplayer Support**: Multiple bots can now collaborate on building a structure. This is configured using the `bots` option in the `build` method.
-- **Configuration Options**: The `build` method now accepts an `options` object to configure the build process, including `buildSpeed`, `useTools`, and `onError`.
+- **Configuration Options**: The `build` method now accepts an `options` object to configure the build process, including `buildSpeed`, `onError`, and `bots`.
 - **Optimized Route Calculation**: The plugin now optimizes the route for placing blocks to minimize travel distance.
 - **Additional Events**: New events such as `builder_paused`, `builder_resumed`, `builder_cancelled`, and `builder_action_completed` provide more detailed feedback on the build process.
 
