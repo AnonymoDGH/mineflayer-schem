@@ -1,13 +1,20 @@
+# Mineflayer-Schem
 
-# Mineflayer Builder Plugin
+A plugin for Mineflayer to build structures from schematic files in Minecraft.
 
-A plugin for Mineflayer that allows bots to build structures from schematic files.
+## Features
 
-[![npm version](https://badge.fury.io/js/mineflayer-schem.svg)](https://www.npmjs.com/package/mineflayer-schem@1.3.7)
+- Build structures from schematic files
+- Automatic item collection from nearby chests
+- Multi-bot support for collaborative building
+- Intelligent block placement with proper facing and orientation
+- Advanced error handling and recovery
+- Progress tracking and event system
+- Configurable build speed and behavior
 
 ## Installation
 
-```sh
+```bash
 npm install mineflayer-schem
 ```
 
@@ -15,227 +22,129 @@ npm install mineflayer-schem
 
 ```javascript
 const mineflayer = require('mineflayer');
-const { builder, Build } = require('mineflayer-schem');
-const builderPlugin = require('mineflayer-schem').builder;
-
-const bot = mineflayer.createBot({
-  // Your bot configuration here
-});
-
-bot.loadPlugin(builderPlugin);
-
-// Example of building a structure
-const schematic = { /* Your schematic data */ };
-const position = bot.entity.position.offset(10, 0, 10); // Position where to build
-const build = new Build(schematic, bot.world, position);
-
-const options = {
-  buildSpeed: 1.0, // 1.0 is normal speed, 0.5 is half speed, etc.
-  onError: 'pause', // 'pause', 'cancel', or 'continue'
-  bots: [bot] // Array of bots to collaborate in the build process
-};
-
-// Optional chest option to get items for the build
-// bot.builder.chest([x, y, z]);  // Example: [1204, 149, 1345] (coordinates of the chest)
-bot.builder.chest([1204, 149, 1345]);  // Tells the bot to use items from this chest
-
-bot.builder.build(build, options);
-```
-
-## API
-
-### Builder Methods
-
-#### bot.builder.build(build, options)
-Starts building the specified structure.
-- `build`: Build object created from a schematic.
-- `options`: Configuration options for the build process.
-  - `buildSpeed`: Speed of building (1.0 is normal speed, 0.5 is half speed, etc.)
-  - `onError`: Action to take on error (`'pause'`, `'cancel'`, or `'continue'`).
-  - `bots`: Array of bots to collaborate in the build process (default: `[bot]`).
-
-#### bot.builder.chest(coordinates)
-Specifies the chest from which to take the building materials.
-- `coordinates`: An array of the chest coordinates, e.g. `[x, y, z]`.
-
-#### bot.builder.pause()
-Pauses the current building process.
-
-#### bot.builder.resume()
-Resumes a paused building process.
-
-#### bot.builder.cancel()
-Cancels the current building process.
-
-#### bot.builder.getProgress()
-Returns the current building progress.
-- Returns: `{ completed: number, total: number }`
-
-#### bot.builder.equipItem(id)
-Equips the specified item.
-- `id`: Item ID to equip.
-
-### Events
-
-#### builder_progress
-Emitted when building progress updates.
-```javascript
-bot.on('builder_progress', (progress) => {
-  // progress = { completed: number, total: number }
-});
-```
-
-#### builder_finished
-Emitted when building completes successfully.
-
-#### builder_cancelled
-Emitted when building is cancelled.
-
-#### builder_error
-Emitted when an error occurs during building.
-```javascript
-bot.on('builder_error', (error) => {
-  console.log('Building error:', error);
-});
-```
-
-#### builder_paused
-Emitted when building is paused.
-
-#### builder_resumed
-Emitted when building is resumed.
-
-#### builder_action_completed
-Emitted when an action is completed.
-```javascript
-bot.on('builder_action_completed', (action) => {
-  console.log(`Action completed: ${action.type} at ${action.pos.x}, ${action.pos.y}, ${action.pos.z}`);
-});
-```
-
-### Build Class
-
-#### new Build(schematic, world, position, area = null)
-Creates a new Build instance.
-- `schematic`: Schematic object.
-- `world`: Bot's world.
-- `position`: Vec3 position where to build.
-- `area`: Optional area to build a part of the schematic.
-
-#### Properties
-- `actions`: Array of pending building actions.
-- `properties`: Block state properties.
-- `isPaused`: Boolean indicating if build is paused.
-- `isCancelled`: Boolean indicating if build is cancelled.
-
-#### Methods
-- `getAvailableActions()`: Returns an array of available actions.
-- `removeAction(action)`: Removes a completed action.
-- `pause()`: Pauses the build.
-- `resume()`: Resumes the build.
-- `cancel()`: Cancels the build.
-- `getProgress()`: Returns the current build progress.
-- `markActionComplete(action)`: Marks an action as complete.
-- `updateBlock(pos)`: Updates the block at the specified position.
-- `getItemForState(stateId)`: Gets the item for a given state ID.
-- `getFacing(stateId, facing)`: Gets the facing direction for a given state ID.
-- `getPossibleDirections(stateId, pos)`: Gets possible directions for placing a block at a given position.
-
-### Example
-
-```javascript
-const path = require('path');
-const fs = require('fs').promises;
-const { builder, Build } = require('mineflayer-schem');
-const { Schematic } = require('prismarine-schematic');
 const { pathfinder } = require('mineflayer-pathfinder');
-const mineflayer = require('mineflayer');
-const mineflayerViewer = require('prismarine-viewer').mineflayer;
+const { Build, builder } = require('mineflayer-schem');
 
 const bot = mineflayer.createBot({
-  host: process.argv[2] || 'localhost',
-  port: parseInt(process.argv[3]) || 25565,
-  username: process.argv[4] || 'andy',
-  password: process.argv[5]
+    host: 'localhost',
+    port: 25565,
+    username: 'Builder'
 });
 
 bot.loadPlugin(pathfinder);
 bot.loadPlugin(builder);
 
-function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
-bot.once('spawn', async () => {
-  mineflayerViewer(bot, { port: 3000 });
-
-  bot.on('path_update', (r) => {
-    const path = [bot.entity.position.offset(0, 0.5, 0)];
-    for (const node of r.path) {
-      path.push({ x: node.x, y: node.y + 0.5, z: node.z });
-    }
-    bot.viewer.drawLine('path', path, 0xff00ff);
-  });
-
-  const schematic = await Schematic.read(await fs.readFile(path.resolve(__dirname, '../example/schematic/smallhouse1.schem')), bot.version);
-  while (!bot.entity.onGround) {
-    await wait(100);
-  }
-  const at = bot.entity.position.floored();
-  console.log('Building at ', at);
-
-  const build = new Build(schematic, bot.world, at);
-
-  const options = {
-    buildSpeed: 1.0, // 1.0 is normal speed, 0.5 is half speed, etc.
-    onError: 'pause', // 'pause', 'cancel', or 'continue'
-    bots: [bot] // Array of bots to collaborate
-  };
-
-  bot.builder.chest([1204, 149, 1345]);  // Tells the bot to use items from this chest
-
-  bot.builder.build(build, options);
-});
-
-bot.on('builder_progress', (progress) => {
-  console.log(`Build progress: ${progress.completed} / ${progress.total} blocks placed`);
-});
-
-bot.on('builder_finished', () => {
-  console.log('Build completed successfully!');
-});
-
-bot.on('builder_error', (error) => {
-  console.error('Builder error:', error);
-});
-
-bot.on('builder_paused', () => {
-  console.log('Build paused.');
-});
-
-bot.on('builder_resumed', () => {
-  console.log('Build resumed.');
-});
-
-bot.on('builder_cancelled', () => {
-  console.log('Build cancelled.');
-});
-
-bot.on('builder_action_completed', (action) => {
-  console.log(`Action completed: ${action.type} at ${action.pos.x}, ${action.pos.y}, ${action.pos.z}`);
-});
+async function startBuild() {
+    const schematic = await Schematic.read(/* your schematic file */);
+    const build = new Build(schematic, bot.world, bot.entity.position.floored());
+    
+    const options = {
+        buildSpeed: 1.0,
+        onError: 'pause',
+        retryCount: 3,
+        useNearestChest: true,
+        bots: [bot]
+    };
+    
+    await bot.builder.build(build, options);
+}
 ```
 
-### New Features in Version 1.3.6
+## API Documentation
 
-- **Chest Item Retrieval**: You can now specify a chest using `bot.builder.chest([x, y, z])` to have the bot fetch items from the chest for construction.
-- **Multiplayer Support**: Multiple bots can now collaborate on building a structure. This is configured using the `bots` option in the `build` method.
-- **Configuration Options**: The `build` method now accepts an `options` object to configure the build process, including `buildSpeed`, `onError`, and `bots`.
-- **Optimized Route Calculation**: The plugin now optimizes the route for placing blocks to minimize travel distance.
-- **Additional Events**: New events such as `builder_paused`, `builder_resumed`, `builder_cancelled`, and `builder_action_completed` provide more detailed feedback on the build process.
+### Injection
 
-### Contributing
+#### builder(bot, options)
+Injects the builder plugin into the bot.
 
-Contributions are welcome! If you find a bug or have a feature request, please open an issue or submit a pull request.
+Options:
+- `buildSpeed`: Build speed multiplier (default: 1.0)
+- `onError`: Error handling strategy ('pause', 'cancel', 'retry') (default: 'pause')
+- `retryCount`: Number of retries on failure (default: 3)
+- `useNearestChest`: Automatically use nearby chests for items (default: true)
+- `bots`: Array of bots for collaborative building (default: [bot])
 
-### License
+### Classes
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+#### new Build(schematic, world, position, area = null)
+Creates a new Build instance.
+- `schematic`: Schematic object
+- `world`: Bot's world
+- `position`: Vec3 position where to build
+- `area`: Optional area to build a part of the schematic
+
+#### Properties
+- `actions`: Array of pending building actions
+- `properties`: Block state properties
+- `isPaused`: Boolean indicating if build is paused
+- `isCancelled`: Boolean indicating if build is cancelled
+
+#### Methods
+- `getAvailableActions()`: Returns array of available actions
+- `removeAction(action)`: Removes a completed action
+- `pause()`: Pauses the build
+- `resume()`: Resumes the build
+- `cancel()`: Cancels the build
+- `getProgress()`: Returns current build progress
+- `markActionComplete(action)`: Marks an action as complete
+- `updateBlock(pos)`: Updates block at specified position
+- `getItemForState(stateId)`: Gets item for state ID
+- `getFacing(stateId, facing)`: Gets facing direction
+- `getPossibleDirections(stateId, pos)`: Gets possible placement directions
+
+### Events
+
+- `builder_progress`: Emitted with build progress updates
+- `builder_error`: Emitted when an error occurs
+- `builder_paused`: Emitted when build is paused
+- `builder_resumed`: Emitted when build is resumed
+- `builder_cancelled`: Emitted when build is cancelled
+- `builder_finished`: Emitted when build completes
+
+### Advanced Features
+
+#### Automatic Item Collection
+The plugin automatically searches for and collects items from nearby chests when needed:
+```javascript
+const options = {
+    useNearestChest: true,
+    // other options...
+};
+```
+
+#### Multi-Bot Building
+Multiple bots can work together on the same structure:
+```javascript
+const options = {
+    bots: [mainBot, helperBot1, helperBot2],
+    // other options...
+};
+```
+
+## Example
+
+See the `example` folder for a complete working example.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT
+
+## Changelog
+
+### 1.4.0
+- Added automatic nearest chest detection and item collection
+- Improved multi-bot coordination
+- Enhanced error handling and recovery
+- Added build progress statistics
+- Optimized block placement logic
+
+### 1.3.6
+- Added basic chest item retrieval
+- Added multiplayer support
+- Added configuration options
+- Improved route calculation
+- Added new events
