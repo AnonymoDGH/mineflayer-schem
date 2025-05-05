@@ -1,16 +1,17 @@
-# Mineflayer-Schem
+# mineflayer-schem
 
-A plugin for Mineflayer to build structures from schematic files in Minecraft.
+This plugin extends [mineflayer](https://github.com/PrismarineJS/mineflayer) to build structures from schematic files, supporting both modern and legacy formats, recent Minecraft versions, and advanced inventory/chest management.
 
 ## Features
 
-- Build structures from schematic files
-- Automatic item collection from nearby chests
-- Multi-bot support for collaborative building
-- Intelligent block placement with proper facing and orientation
-- Advanced error handling and recovery
-- Progress tracking and event system
-- Configurable build speed and behavior
+- Support for schematic files (`.schematic`, `.schem`, `.litematic`, NBT), both modern and legacy formats.
+- Compatible with the latest Minecraft versions (1.8–1.20+).
+- Automatic construction with single or multiple bots.
+- Automatic item retrieval from the nearest chest.
+- Advanced handling of directional blocks, stairs, slabs, and special blocks.
+- Detailed progress tracking and events.
+- Configurable speed and error handling options.
+- Construction statistics and error logging.
 
 ## Installation
 
@@ -18,133 +19,145 @@ A plugin for Mineflayer to build structures from schematic files in Minecraft.
 npm install mineflayer-schem
 ```
 
-## Usage
+## Example Usage
 
 ```javascript
 const mineflayer = require('mineflayer');
 const { pathfinder } = require('mineflayer-pathfinder');
 const { Build, builder } = require('mineflayer-schem');
+const { Schematic } = require('prismarine-schematic');
+const fs = require('fs').promises;
+const path = require('path');
 
 const bot = mineflayer.createBot({
-    host: 'localhost',
-    port: 25565,
-    username: 'Builder'
+  host: 'localhost',
+  port: 25565,
+  username: 'BuilderBot',
+  version: '1.20.4' // Change according to your server
 });
 
 bot.loadPlugin(pathfinder);
 bot.loadPlugin(builder);
 
-async function startBuild() {
-    const schematic = await Schematic.read(/* your schematic file */);
-    const build = new Build(schematic, bot.world, bot.entity.position.floored());
-    
-    const options = {
-        buildSpeed: 1.0,
-        onError: 'pause',
-        retryCount: 3,
-        useNearestChest: true,
-        bots: [bot]
-    };
-    
-    await bot.builder.build(build, options);
-}
+bot.once('spawn', async () => {
+  const schematic = await Schematic.read(
+    await fs.readFile(path.resolve(__dirname, './schematic/house.schem')),
+    bot.version
+  );
+
+  while (!bot.entity.onGround) await new Promise(r => setTimeout(r, 100));
+
+  const build = new Build(schematic, bot.world, bot.entity.position.floored());
+
+  const options = {
+    buildSpeed: 1.0,
+    onError: 'pause',
+    retryCount: 3,
+    useNearestChest: true,
+    bots: [bot]
+  };
+
+  bot.on('builder_progress', (progress) => {
+    const percent = Math.floor((progress.completed / progress.total) * 100);
+    console.log(`Progress: ${percent}% (${progress.completed}/${progress.total})`);
+  });
+
+  bot.on('builder_error', (error) => {
+    console.error('Error:', error.message);
+  });
+
+  bot.on('builder_finished', () => {
+    console.log('Build finished!');
+  });
+
+  await bot.builder.build(build, options);
+});
 ```
 
-## API Documentation
+## API
 
-### Injection
-
-#### builder(bot, options)
+### builder(bot, options)
 Injects the builder plugin into the bot.
 
-Options:
 - `buildSpeed`: Build speed multiplier (default: 1.0)
-- `onError`: Error handling strategy ('pause', 'cancel', 'retry') (default: 'pause')
+- `onError`: Error strategy ('pause', 'cancel', 'retry', 'skip')
 - `retryCount`: Number of retries on failure (default: 3)
 - `useNearestChest`: Automatically use nearby chests for items (default: true)
-- `bots`: Array of bots for collaborative building (default: [bot])
+- `bots`: Bots collaborating on the build (default: [bot])
 
-### Classes
+### Build
 
 #### new Build(schematic, world, position, area = null)
-Creates a new Build instance.
-- `schematic`: Schematic object
-- `world`: Bot's world
-- `position`: Vec3 position where to build
-- `area`: Optional area to build a part of the schematic
+Creates a new build instance.
+- `schematic`: Schematic object.
+- `world`: Bot's world.
+- `position`: Vec3 where to build.
+- `area`: Optional area for partial builds.
 
 #### Properties
-- `actions`: Array of pending building actions
-- `properties`: Block state properties
-- `isPaused`: Boolean indicating if build is paused
-- `isCancelled`: Boolean indicating if build is cancelled
+- `actions`: Pending actions.
+- `completedActions`: Completed actions.
+- `properties`: Block properties.
+- `isPaused`: If build is paused.
+- `isCancelled`: If build is cancelled.
 
 #### Methods
-- `getAvailableActions()`: Returns array of available actions
-- `removeAction(action)`: Removes a completed action
-- `pause()`: Pauses the build
-- `resume()`: Resumes the build
-- `cancel()`: Cancels the build
-- `getProgress()`: Returns current build progress
-- `markActionComplete(action)`: Marks an action as complete
-- `updateBlock(pos)`: Updates block at specified position
-- `getItemForState(stateId)`: Gets item for state ID
-- `getFacing(stateId, facing)`: Gets facing direction
-- `getPossibleDirections(stateId, pos)`: Gets possible placement directions
+- `getAvailableActions()`
+- `removeAction(action)`
+- `pause()`
+- `resume()`
+- `cancel()`
+- `getProgress()`
+- `markActionComplete(action)`
+- `getItemForState(stateId)`
+- `getFacing(stateId, facing)`
+- `getPossibleDirections(stateId, pos)`
+- `getBuildErrors()`
 
 ### Events
 
-- `builder_progress`: Emitted with build progress updates
-- `builder_error`: Emitted when an error occurs
-- `builder_paused`: Emitted when build is paused
-- `builder_resumed`: Emitted when build is resumed
-- `builder_cancelled`: Emitted when build is cancelled
-- `builder_finished`: Emitted when build completes
+- `builder_progress`
+- `builder_error`
+- `builder_paused`
+- `builder_resumed`
+- `builder_cancelled`
+- `builder_finished`
 
-### Advanced Features
+## Supported Formats
 
-#### Automatic Item Collection
-The plugin automatically searches for and collects items from nearby chests when needed:
-```javascript
-const options = {
-    useNearestChest: true,
-    // other options...
-};
-```
+- `.schematic` classic (MCEdit)
+- `.schem` modern (WorldEdit/Minecraft 1.13+)
+- `.litematic` (Litematica)
+- Raw NBT
 
-#### Multi-Bot Building
-Multiple bots can work together on the same structure:
-```javascript
-const options = {
-    bots: [mainBot, helperBot1, helperBot2],
-    // other options...
-};
-```
+## Advanced
 
-## Example
+### Automatic Chest Support
+The bot detects and retrieves items from the nearest chests as needed for the schematic.
 
-See the `example` folder for a complete working example.
+### Multi-bot
+Multiple bots can collaborate on the same build using the `bots` option.
+
+### Statistics and Errors
+Get detailed metrics and errors during the process with `getProgress()` and `getBuildErrors()`.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Pull requests and suggestions are welcome!
 
 ## License
 
 MIT
 
-## Changelog
+## Recent Changes
 
-### 1.4.0
-- Added automatic nearest chest detection and item collection
-- Improved multi-bot coordination
-- Enhanced error handling and recovery
-- Added build progress statistics
-- Optimized block placement logic
+### 1.5.0
+- Support for modern and legacy schematic formats
+- Automatic detection and usage of the nearest chest
+- Improved error handling and statistics
+- Support for latest Minecraft blocks and properties
+- Performance improvements and multi-bot support
 
-### 1.3.6
-- Added basic chest item retrieval
-- Added multiplayer support
-- Added configuration options
-- Improved route calculation
-- Added new events
+### 1.4.x
+- Route optimization and new configuration options
+- Basic chest support
