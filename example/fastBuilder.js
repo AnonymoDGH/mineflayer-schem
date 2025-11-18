@@ -8,14 +8,14 @@ const path = require('path');
 const bot = mineflayer.createBot({
     host: process.argv[2] || 'localhost',
     port: parseInt(process.argv[3]) || 31484,
-    username: process.argv[4] || 'Builder',
+    username: process.argv[4] || 'FastBuilder',
 });
 
 bot.loadPlugin(pathfinder);
 
 const builderOptions = {
-    buildSpeed: 7.0,
-    clearArea: true,
+    buildSpeed: 5.0,
+    clearArea: false,
     onError: 'skip',
 };
 
@@ -51,7 +51,9 @@ async function startBuilding() {
         const build = new Build(schematic, bot.world, buildPosition, bot);
         
         bot.on('builder_progress', (progress) => {
-            console.log(`📊 Progress: ${progress.percentage}% (${progress.completed}/${progress.total})`);
+            if (progress.completed % 50 === 0) {
+                console.log(`📊 Progress: ${progress.percentage}% (${progress.completed}/${progress.total})`);
+            }
         });
 
         bot.on('builder_error', (error) => {
@@ -65,6 +67,7 @@ async function startBuilding() {
             console.log(`   Blocks placed: ${stats.blocksPlaced}`);
             console.log(`   Blocks failed: ${stats.blocksFailed}`);
             console.log(`   Total time: ${((Date.now() - stats.startTime) / 1000).toFixed(2)}s`);
+            console.log(`   Average speed: ${(stats.blocksPlaced / ((Date.now() - stats.startTime) / 1000)).toFixed(2)} blocks/sec`);
         });
 
         await bot.builder.build(build);
@@ -77,6 +80,7 @@ async function startBuilding() {
 
 bot.once('spawn', () => {
     console.log('✅ Bot connected to the server');
+    console.log('⚡ FAST mode activated - 5 blocks/second');
     setTimeout(() => startBuilding().catch(console.error), 2000);
 });
 

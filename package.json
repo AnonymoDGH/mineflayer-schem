@@ -1,33 +1,13 @@
 {
   "name": "mineflayer-schem",
-  "version": "1.5.0",
-  "description": "A mineflayer plugin for building structures from schematic files (modern and legacy) with advanced chest and block support.",
-  "main": "index.js",
-  "type": "commonjs",
-  "scripts": {
-    "start": "node example/simpleBuilder.js"
-  },
-  "keywords": [
-    "mineflayer",
-    "minecraft",
-    "schematic",
-    "schem",
-    "litematic",
-    "bot",
-    "builder",
-    "automation"
-  ],
-  "author": "AnonymoDGH",
-  "license": "MIT",
+  "version": "1.5.1",
   "dependencies": {
-    "mineflayer": "^4.15.0",
-    "mineflayer-pathfinder": "^2.7.0",
-    "prismarine-block": "^2.5.0",
-    "prismarine-nbt": "^2.3.1",
-    "prismarine-schematic": "^1.5.0",
+    "mineflayer": "^4.20.1",
+    "mineflayer-pathfinder": "^2.4.0",
+    "mineflayer-tool": "^1.2.0",
+    "prismarine-nbt": "^2.5.0",
+    "prismarine-item": "^1.14.0",
+    "minecraft-data": "^3.69.0",
     "vec3": "^0.1.8"
-  },
-  "peerDependencies": {
-    "minecraft-data": "^3.56.0"
   }
 }
